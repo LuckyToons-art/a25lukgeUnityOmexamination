@@ -1,45 +1,33 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class TimeLimit : MonoBehaviour
 {
-    [Header("Time Settings")]
-    public float maxTime = 30f;
-    public float dashTimeCost = 2f;
-
-    [Header("Text")]
+    [Header("Timer Settings")]
+    public float maxTime = 300f;
     public TMP_Text timerText;
 
+    [Header("Endgame Settings")]
+    public GameObject endGamePingPrefab;  // prefab for the ping
+    public Vector2 mapCenter = Vector2.zero;
+    public float minTimeToTriggerPing = 300f;
+
     private float currentTime;
-    private bool active = true;
+    private bool pingSpawned = false;
 
-    void Start()
+    void Awake()
     {
-        currentTime = maxTime;
-
-        if (!timerText)
-            Debug.LogError("TimeLimit: TimerText not assigned!");
-
+        currentTime = 0f;
         UpdateText();
     }
 
     void Update()
     {
-        if (!active) return;
-
         currentTime -= Time.deltaTime;
-        currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
+        if (currentTime < 0f)
+            currentTime = 0f;
 
-        UpdateText();
-
-        if (currentTime <= 0f)
-            TimeUp();
-    }
-
-    public void ConsumeDashTime()
-    {
-        currentTime -= dashTimeCost;
-        currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
         UpdateText();
     }
 
@@ -48,28 +36,31 @@ public class TimeLimit : MonoBehaviour
         currentTime += amount;
         currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
         UpdateText();
+
+        // Spawn endgame ping if enough time
+        if (!pingSpawned && currentTime >= minTimeToTriggerPing && endGamePingPrefab != null)
+        {
+            SpawnEndGamePing();
+        }
+    }
+
+    public void ConsumeDashTime(float amount = 1f)
+    {
+        currentTime -= amount;
+        if (currentTime < 0f) currentTime = 0f;
+        UpdateText();
     }
 
     void UpdateText()
     {
-        if (!timerText) return;
-
-        // Display as seconds
-        int seconds = Mathf.CeilToInt(currentTime);
-        timerText.text = seconds.ToString();
-
-        // Optional: color warning when low
-        if (currentTime <= maxTime * 0.25f)
-            timerText.color = Color.red;
-        else
-            timerText.color = Color.white;
+        if (timerText != null)
+            timerText.text = Mathf.CeilToInt(currentTime).ToString();
     }
 
-    void TimeUp()
+    void SpawnEndGamePing()
     {
-        active = false;
-        timerText.text = "0";
-        Debug.Log("Time's up!");
-        // TODO: trigger Game Over here
+        Instantiate(endGamePingPrefab, mapCenter, Quaternion.identity);
+        pingSpawned = true;
+        Debug.Log("Endgame ping spawned! Reach the center to finish the game.");
     }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(AudioSource))]
 public class ChasingEnemy : MonoBehaviour
 {
     [Header("Patrol Settings")]
@@ -12,15 +12,16 @@ public class ChasingEnemy : MonoBehaviour
     public float chaseSpeed = 3f;
     public float detectionRadius = 5f;
 
-    [Header("Health")]
+    [Header("Health & Time Reward")]
     public int maxHealth = 1;
+    public int timeReward = 10;
 
-    [Header("Time Reward")]
-    public int timeReward = 10; // seconds added on death
+    [Header("Contact Damage")]
+    public float damageInterval = 0.5f;
+    public float damageAmount = 1f;
 
-    [Header("Damage on Contact")]
-    public float damageInterval = 0.5f; // seconds between timer drain
-    public float damageAmount = 1f;      // amount of time drained
+    [Header("Audio")]
+    public AudioClip detectionSound;
 
     private Rigidbody2D rb;
     private Vector2 targetPos;
@@ -28,9 +29,11 @@ public class ChasingEnemy : MonoBehaviour
 
     private Transform player;
     private TimeLimit timeLimit;
+    private AudioSource audioSource;
 
     private float damageTimer = 0f;
     private bool playerInContact = false;
+    private bool hasDetectedPlayer = false;
 
     void Awake()
     {
@@ -40,20 +43,35 @@ public class ChasingEnemy : MonoBehaviour
 
         currentHealth = maxHealth;
 
-        if (!pointA || !pointB)
-            Debug.LogError("ChasingEnemy: Assign pointA and pointB!");
+        if (!pointA || !pointB) Debug.LogError("Assign patrol points!");
 
         targetPos = pointB.position;
-
         player = FindObjectOfType<PixelDashMovement2D>()?.transform;
         timeLimit = FindObjectOfType<TimeLimit>();
+
+        audioSource = GetComponent<AudioSource>();
+        audioSource.playOnAwake = false;
     }
 
     void FixedUpdate()
     {
-        if (player != null && Vector2.Distance(transform.position, player.position) <= detectionRadius)
+        if (player != null)
         {
-            ChasePlayer();
+            float distance = Vector2.Distance(transform.position, player.position);
+            if (distance <= detectionRadius)
+            {
+                if (!hasDetectedPlayer)
+                {
+                    PlayDetectionSound();
+                    hasDetectedPlayer = true;
+                }
+                ChasePlayer();
+            }
+            else
+            {
+                hasDetectedPlayer = false;
+                Patrol();
+            }
         }
         else
         {
@@ -63,7 +81,6 @@ public class ChasingEnemy : MonoBehaviour
         HandleContactDamage();
     }
 
-    #region Patrol
     void Patrol()
     {
         Vector2 newPos = Vector2.MoveTowards(rb.position, targetPos, patrolSpeed * Time.fixedDeltaTime);
@@ -72,17 +89,19 @@ public class ChasingEnemy : MonoBehaviour
         if (Vector2.Distance(rb.position, targetPos) < 0.05f)
             targetPos = targetPos == (Vector2)pointA.position ? pointB.position : pointA.position;
     }
-    #endregion
 
-    #region Chase
     void ChasePlayer()
     {
         Vector2 newPos = Vector2.MoveTowards(rb.position, player.position, chaseSpeed * Time.fixedDeltaTime);
         rb.MovePosition(newPos);
     }
-    #endregion
 
-    #region Damage
+    void PlayDetectionSound()
+    {
+        if (audioSource != null && detectionSound != null)
+            audioSource.PlayOneShot(detectionSound);
+    }
+
     void HandleContactDamage()
     {
         if (!playerInContact || timeLimit == null) return;
@@ -90,8 +109,7 @@ public class ChasingEnemy : MonoBehaviour
         damageTimer += Time.fixedDeltaTime;
         if (damageTimer >= damageInterval)
         {
-            timeLimit.ConsumeDashTime(); // we can also subtract directly
-            timeLimit.AddTime(-damageAmount); // subtract damageAmount from timer
+            timeLimit.AddTime(-damageAmount);
             damageTimer = 0f;
         }
     }
@@ -99,9 +117,7 @@ public class ChasingEnemy : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.collider.GetComponent<PixelDashMovement2D>() != null)
-        {
             playerInContact = true;
-        }
     }
 
     private void OnCollisionExit2D(Collision2D collision)
@@ -112,33 +128,25 @@ public class ChasingEnemy : MonoBehaviour
             damageTimer = 0f;
         }
     }
-    #endregion
 
-    #region Damage from Dash
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-
-        if (currentHealth <= 0)
-            Die();
+        if (currentHealth <= 0) Die();
     }
 
     void Die()
     {
-        if (timeLimit != null)
-            timeLimit.AddTime(timeReward);
-
+        if (timeLimit != null) timeLimit.AddTime(timeReward);
         Destroy(gameObject);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Detect player dash
         PixelDashMovement2D playerDash = collision.GetComponent<PixelDashMovement2D>();
         if (playerDash != null && playerDash.IsDashing())
         {
             TakeDamage(1);
         }
     }
-    #endregion
 }
