@@ -5,11 +5,12 @@ using UnityEngine.SceneManagement;
 public class TimeLimit : MonoBehaviour
 {
     [Header("Timer Settings")]
-    public float maxTime = 300f;
+    public float startTime = 200f;         // Timer starts at 200 seconds
+    public float maxTime = 400f;           // Optional: clamp maximum time
     public TMP_Text timerText;
 
     [Header("Endgame Settings")]
-    public GameObject endGamePingPrefab;  // prefab for the ping
+    public GameObject endGamePingPrefab;   // prefab for the ping
     public Vector2 mapCenter = Vector2.zero;
     public float minTimeToTriggerPing = 300f;
 
@@ -18,32 +19,38 @@ public class TimeLimit : MonoBehaviour
 
     void Awake()
     {
-        currentTime = 0f;
+        currentTime = startTime;
         UpdateText();
     }
 
     void Update()
     {
+        // Countdown timer
         currentTime -= Time.deltaTime;
-        if (currentTime < 0f)
-            currentTime = 0f;
+        if (currentTime < 0f) currentTime = 0f;
 
         UpdateText();
     }
 
+    /// <summary>
+    /// Add time to the timer (from coins or enemy kills)
+    /// </summary>
     public void AddTime(float amount)
     {
         currentTime += amount;
         currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
         UpdateText();
 
-        // Spawn endgame ping if enough time
+        // Spawn endgame ping if threshold reached
         if (!pingSpawned && currentTime >= minTimeToTriggerPing && endGamePingPrefab != null)
         {
             SpawnEndGamePing();
         }
     }
 
+    /// <summary>
+    /// Consume time when player dashes
+    /// </summary>
     public void ConsumeDashTime(float amount = 1f)
     {
         currentTime -= amount;
