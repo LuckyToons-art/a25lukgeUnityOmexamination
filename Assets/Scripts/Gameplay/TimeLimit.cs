@@ -10,8 +10,8 @@ public class TimeLimit : MonoBehaviour
     [Header("Text")]
     public TMP_Text timerText;
 
-    float currentTime;
-    bool active = true;
+    private float currentTime;
+    private bool active = true;
 
     void Start()
     {
@@ -43,13 +43,22 @@ public class TimeLimit : MonoBehaviour
         UpdateText();
     }
 
+    public void AddTime(float amount)
+    {
+        currentTime += amount;
+        currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
+        UpdateText();
+    }
+
     void UpdateText()
     {
         if (!timerText) return;
 
-        timerText.text = Mathf.CeilToInt(currentTime).ToString();
+        // Display as seconds
+        int seconds = Mathf.CeilToInt(currentTime);
+        timerText.text = seconds.ToString();
 
-        // Color warning when low
+        // Optional: color warning when low
         if (currentTime <= maxTime * 0.25f)
             timerText.color = Color.red;
         else
@@ -61,5 +70,6 @@ public class TimeLimit : MonoBehaviour
         active = false;
         timerText.text = "0";
         Debug.Log("Time's up!");
+        // TODO: trigger Game Over here
     }
 }

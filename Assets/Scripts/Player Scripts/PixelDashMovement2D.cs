@@ -19,11 +19,15 @@ public class PixelDashMovement2D : MonoBehaviour
     private bool isDashing;
     private bool canDash = true;
 
+    private TimeLimit timeLimit;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.freezeRotation = true;
+
+        timeLimit = FindObjectOfType<TimeLimit>();
     }
 
     void Update()
@@ -48,13 +52,17 @@ public class PixelDashMovement2D : MonoBehaviour
     {
         if (isDashing) return;
 
-        rb.linearVelocity = moveInput.normalized * moveSpeed;
+        rb.linearVelocity = Vector2.ClampMagnitude(moveInput, 1f) * moveSpeed;
     }
 
     IEnumerator Dash()
     {
         canDash = false;
         isDashing = true;
+
+        // Drain timer on dash
+        if (timeLimit != null)
+            timeLimit.ConsumeDashTime();
 
         rb.linearVelocity = lastMoveDir * dashSpeed;
 
@@ -65,5 +73,11 @@ public class PixelDashMovement2D : MonoBehaviour
 
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
+    }
+
+    // Expose dashing state for enemy collision
+    public bool IsDashing()
+    {
+        return isDashing;
     }
 }
