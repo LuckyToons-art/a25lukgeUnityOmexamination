@@ -46,10 +46,7 @@ public class PixelDashMovement2D : MonoBehaviour
         );
 
         if (moveInput != Vector2.zero)
-        {
             lastMoveDir = moveInput.normalized;
-            startPosition = transform.position; // reset bob origin when moving
-        }
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
         {
@@ -64,9 +61,9 @@ public class PixelDashMovement2D : MonoBehaviour
         rb.linearVelocity = Vector2.ClampMagnitude(moveInput, 1f) * moveSpeed;
 
         if (moveInput == Vector2.zero)
-        {
             IdleBob();
-        }
+        else
+            startPosition = transform.position; // reset bob origin
     }
 
     IEnumerator Dash()
@@ -74,8 +71,8 @@ public class PixelDashMovement2D : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        if (timeLimit != null)
-            timeLimit.ConsumeDashTime();
+        // Reduce timer on dash
+        timeLimit?.ConsumeDashTime();
 
         rb.linearVelocity = lastMoveDir * dashSpeed;
         yield return new WaitForSeconds(dashDuration);
@@ -86,11 +83,11 @@ public class PixelDashMovement2D : MonoBehaviour
         canDash = true;
     }
 
-    public bool IsDashing() => isDashing;
-
     void IdleBob()
     {
         float newY = startPosition.y + Mathf.Sin(Time.time * bobFrequency) * bobAmplitude;
         rb.MovePosition(new Vector2(rb.position.x, newY));
     }
+
+    public bool IsDashing() => isDashing;
 }

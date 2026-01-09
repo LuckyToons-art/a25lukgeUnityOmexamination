@@ -29,8 +29,7 @@ public class Coin : MonoBehaviour
         if (collectSound != null) audioSource.PlayOneShot(collectSound);
         if (collectEffect != null) Instantiate(collectEffect, transform.position, Quaternion.identity);
 
-        // Add time bonus
-        if (timeLimit != null) timeLimit.AddTime(timeBonus);
+        timeLimit?.AddTime(timeBonus);
 
         Destroy(gameObject);
     }

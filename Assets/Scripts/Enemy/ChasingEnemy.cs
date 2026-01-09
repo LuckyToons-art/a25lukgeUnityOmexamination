@@ -22,6 +22,7 @@ public class ChasingEnemy : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip detectionSound;
+    public AudioClip damageSound; // new: plays when enemy takes damage
 
     private Rigidbody2D rb;
     private Vector2 targetPos;
@@ -44,8 +45,8 @@ public class ChasingEnemy : MonoBehaviour
         currentHealth = maxHealth;
 
         if (!pointA || !pointB) Debug.LogError("Assign patrol points!");
-
         targetPos = pointB.position;
+
         player = FindObjectOfType<PixelDashMovement2D>()?.transform;
         timeLimit = FindObjectOfType<TimeLimit>();
 
@@ -61,10 +62,8 @@ public class ChasingEnemy : MonoBehaviour
             if (distance <= detectionRadius)
             {
                 if (!hasDetectedPlayer)
-                {
                     PlayDetectionSound();
-                    hasDetectedPlayer = true;
-                }
+                hasDetectedPlayer = true;
                 ChasePlayer();
             }
             else
@@ -74,9 +73,7 @@ public class ChasingEnemy : MonoBehaviour
             }
         }
         else
-        {
             Patrol();
-        }
 
         HandleContactDamage();
     }
@@ -132,6 +129,11 @@ public class ChasingEnemy : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
+
+        // Play damage sound
+        if (damageSound != null && audioSource != null)
+            audioSource.PlayOneShot(damageSound);
+
         if (currentHealth <= 0) Die();
     }
 
@@ -145,8 +147,6 @@ public class ChasingEnemy : MonoBehaviour
     {
         PixelDashMovement2D playerDash = collision.GetComponent<PixelDashMovement2D>();
         if (playerDash != null && playerDash.IsDashing())
-        {
             TakeDamage(1);
-        }
     }
 }

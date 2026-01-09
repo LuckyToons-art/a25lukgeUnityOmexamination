@@ -29,7 +29,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4624135341184326850}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 7.8, y: -4.01, z: 0.040247876}
   m_LocalScale: {x: 4.1853127, y: 4.2000003, z: 1}
   m_ConstrainProportionsScale: 0
@@ -298,6 +298,7 @@ MonoBehaviour:
   detectionRadius: 5
   maxHealth: 2
   timeReward: 15
-  damageInterval: 0.5
-  damageAmount: 1
+  damageInterval: 0.3
+  damageAmount: 2
   detectionSound: {fileID: 8300000, guid: 8fc499bb76842674e8cf350a2717cd07, type: 3}
+  damageSound: {fileID: 8300000, guid: 43255384aa8f8684c8e03c47a99e26f6, type: 3}
