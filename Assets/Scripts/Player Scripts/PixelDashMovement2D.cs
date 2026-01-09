@@ -30,7 +30,6 @@ public class PixelDashMovement2D : MonoBehaviour
     {
         if (isDashing) return;
 
-        // Raw input for pixel precision
         moveInput = new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
@@ -39,7 +38,6 @@ public class PixelDashMovement2D : MonoBehaviour
         if (moveInput != Vector2.zero)
             lastMoveDir = moveInput.normalized;
 
-        // Dash input (Left Shift or Space)
         if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
         {
             StartCoroutine(Dash());
